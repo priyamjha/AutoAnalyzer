@@ -1,7 +1,0 @@
-[
-  {"Name": "Alice", "Age": 23, "Gender": "Female", "Country": "USA", "Score": 89},
-  {"Name": "Bob", "Age": 30, "Gender": "Male", "Country": "Canada", "Score": 75},
-  {"Name": "Charlie", "Age": 28, "Gender": "Male", "Country": "India", "Score": 95},
-  {"Name": "Diana", "Age": 25, "Gender": "Female", "Country": "UK", "Score": 82},
-  {"Name": "Ethan", "Age": 35, "Gender": "Male", "Country": "Australia", "Score": 90}
-]
