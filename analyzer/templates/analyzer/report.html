@@ -1,0 +1,295 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>📊 AutoAnalyzer Report</title>
+    <meta charset="utf-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f7fa;
+            color: #333;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1,
+        h3,
+        h4 {
+            font-weight: 600;
+        }
+
+        .meta-info {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid #0d6efd;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .dark-mode .meta-info {
+            background: rgba(40, 40, 40, 0.7);
+            border-left-color: #66b2ff;
+        }
+
+        .btn-success,
+        .btn-success:hover {
+            background: linear-gradient(135deg, #28a745, #218838);
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-switch {
+            font-size: 1rem;
+        }
+
+        .plot-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
+        .plot-grid .card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 10px;
+            border: none;
+        }
+
+        .plot-grid .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .dark-mode .card {
+            background: rgba(30, 30, 30, 0.85);
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        ul li {
+            margin-bottom: 6px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toggle-label {
+            font-weight: 500;
+        }
+
+        .table-responsive {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .dark-mode .table {
+            background-color: #1e1e1e;
+        }
+
+        .form-check-input {
+            cursor: pointer;
+        }
+    </style>
+
+
+</head>
+
+<body class="container py-4">
+    <!-- Add this inside the <body> near the top -->
+    <div class="theme-toggle form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="themeSwitch">
+        <label class="form-check-label" for="themeSwitch">🌗 Dark Mode</label>
+    </div>
+
+
+    <h1 class="mb-4 text-primary">📊 AutoAnalyzer Report</h1>
+
+    <div class="meta-info">
+        <p><strong>🗂️ Dataset File:</strong> {{ stats.filename }}</p>
+        <p><strong>📅 Uploaded At:</strong> {{ stats.upload_time }}</p>
+        <p><strong>📌 Shape:</strong> {{ stats.shape }} ({{ stats.num_rows }} rows, {{ stats.num_columns }} columns)</p>
+    </div>
+    <br><br>
+
+    <!-- Slider Toggle -->
+    <div class="form-check form-switch mb-3 d-flex align-items-center gap-5">
+
+        <label class="form-check-label" for="viewToggle">Beginner View</label>
+        <input class="form-check-input" type="checkbox" id="viewToggle" onchange="toggleView()"
+            style="width: 60px; height: 30px;">
+        <label class="form-check-label" id="viewLabel" for="viewToggle">Technical View</label>
+    </div>
+    <div class="d-flex justify-content-between mb-3">
+        <div></div>
+
+        <a class="btn btn-success" href="{% url 'download_pdf' dataset.id %}">⬇️ Download PDF</a>
+    </div>
+
+    <!-- Beginner View -->
+    <div id="beginner-view" style="display: block;">
+        <h4>📋 Column Data Types</h4>
+        <ul>
+            {% for col, dtype in stats.dtypes.items %}
+            <li><strong>{{ col }}</strong>: {{ dtype }}</li>
+            {% endfor %}
+        </ul>
+
+        <h4>⚠️ Missing Value Columns</h4>
+
+        <!-- Display the total count of missing value columns -->
+        <p>Total Missing Value Columns:<strong> {{ stats.total_missing_columns }}</strong></p>
+
+        <ul>
+            {% for col, val in stats.missing.items %}
+            <li>{{ col }}: {{ val }} missing values</li>
+            {% endfor %}
+        </ul>
+
+
+
+        <!-- Section for displaying NULL values placement -->
+        <div class="mt-4">
+            <h5>Rows with 'NULL' Values</h5>
+            <p>This table shows only the rows where 'NULL' values were inserted:</p>
+            <div class="table-responsive">
+                {{ null_table_html|safe }}
+            </div>
+        </div>
+
+
+        <br>
+
+
+
+
+        <h4>💡 Most Common Value per Column</h4>
+        <ul>
+            {% for col, val in stats.most_freq.items %}
+            <li>{{ col }}: "{{ val }}" ({{ stats.freq_percent|get_item:col }}%)</li>
+            {% endfor %}
+        </ul>
+
+        <h4>📊 Simple Numeric Summary</h4>
+        <ul>
+            {% for col, info in stats.numeric_summary.items %}
+            <li>
+                {{ col }}: Average is {{ info.mean }}, mostly between {{ info.range.0 }} and {{ info.range.1 }}
+            </li>
+            {% endfor %}
+        </ul>
+
+        <h4>📘 Column Types</h4>
+        <ul>
+            {% for dtype, count in stats.col_types.items %}
+            <li>{{ dtype }}: {{ count }} columns</li>
+            {% endfor %}
+        </ul>
+
+        <h4>🔁 Duplicates Info</h4>
+        <p>Your dataset has <strong>{{ stats.duplicates }}</strong> duplicate rows.</p>
+        {% if duplicate_rows_html %}
+        <div class="mt-4">
+            <h5>Duplicate Rows Removed</h5>
+            <p>These rows were identified as duplicates and removed before analysis:</p>
+            <div class="table-responsive">
+                {{ duplicate_rows_html|safe }}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+
+    <!-- Technical Summary -->
+    <div id="tech-view" style="display: none;">
+        <h3>🧠 Technical Summary Statistics</h3>
+        <div class="table-responsive">
+            {{ stats.summary|safe }}
+        </div>
+    </div>
+
+    <h3 class="mt-5 mb-3">📈 Visualizations</h3>
+    <div class="plot-grid">
+        {% for plot in plot_html %}
+        <div class="card p-2" style="width: 48%; min-width: 350px;">
+            {{ plot|safe }}
+        </div>
+        {% endfor %}
+    </div>
+
+
+    <script>
+
+        const toggle = document.getElementById('themeSwitch');
+        const body = document.body;
+
+        // Load theme on page load
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            toggle.checked = true;
+        }
+
+        toggle.addEventListener('change', () => {
+            if (toggle.checked) {
+                body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+
+        function toggleView() {
+            const tech = document.getElementById('tech-view');
+            const beginner = document.getElementById('beginner-view');
+            const isChecked = document.getElementById('viewToggle').checked;
+
+            if (isChecked) {
+                tech.style.display = 'block';
+                beginner.style.display = 'none';
+            } else {
+                tech.style.display = 'none';
+                beginner.style.display = 'block';
+            }
+        }
+
+        // Tooltips activation (optional)
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    </script>
+
+</body>
+
+</html>

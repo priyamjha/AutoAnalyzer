@@ -1,0 +1,18 @@
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore .env files with sensitive information
+.env
+
+# Ignore database files
+db.sqlite3
+
+# Ignore virtual environment folder
+env/
+
+static
+static/
+
+migrations
