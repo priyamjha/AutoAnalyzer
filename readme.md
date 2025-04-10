@@ -65,7 +65,7 @@ A downloadable PDF report is created using `reportlab`, which includes:
 
 ```bash
 # Clone the repository
-git clone https://github.com/priyamjha/autoanalyzer.git
+git clone https://github.com/priyamjha/AutoAnalyzer.git
 cd autoanalyzer
 
 # Create virtual environment
