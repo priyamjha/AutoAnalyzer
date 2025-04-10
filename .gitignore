@@ -18,3 +18,5 @@ static/
 migrations
 
 media/datasets
+
+staticfiles/admin
